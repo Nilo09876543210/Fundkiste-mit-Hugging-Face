@@ -2,4 +2,3 @@ streamlit
 pillow
 transformers
 torch
-tf-keras
