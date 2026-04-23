@@ -2,38 +2,35 @@ import streamlit as st
 import requests
 from PIL import Image
 
-# Titel der App
+# Titel
 st.title("Fundkiste Analyse")
 
 # Datei-Uploader
 uploaded_file = st.file_uploader("Bild auswählen...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # 1. FIX: Zeile war falsch eingerückt (IndentationError)
+    # Fix 1: Korrekte Einrückung
     image = Image.open(uploaded_file)
-    
-    # 2. FIX: 'width="stretch"' statt veraltetem 'use_container_width'
+    # Fix 2: Neuer Breiten-Parameter
     st.image(image, caption='Hochgeladenes Bild', width='stretch')
 
-    # Konfiguration für die Hugging Face API
-    # Ersetze die URL durch deine tatsächliche Modell-URL
+    # WICHTIG: Ersetze 'DEIN_MODELL' durch dein echtes Hugging Face Modell!
     API_URL = "https://api-inference.huggingface.co/models/DEIN_MODELL"
     headers = {"Authorization": f"Bearer {st.secrets['HF_TOKEN']}"}
 
     if st.button("Analyse starten"):
-        with st.spinner('Analysiere Bild...'):
+        with st.spinner('KI arbeitet...'):
             response = requests.post(API_URL, headers=headers, data=uploaded_file.getvalue())
             
-            # 3. FIX: Prüfung des Status-Codes zur Vermeidung von JSONDecodeError
+            # Fix 3: Erst Status prüfen, dann JSON laden
             if response.status_code == 200:
                 try:
                     results = response.json()
-                    st.success("Analyse abgeschlossen!")
+                    st.success("Ergebnis:")
                     st.write(results)
-                except Exception as e:
-                    st.error(f"Fehler beim Verarbeiten der Daten: {e}")
+                except:
+                    st.error("Antwort konnte nicht gelesen werden.")
             elif response.status_code == 503:
-                st.warning("Das KI-Modell startet gerade noch auf Hugging Face. Bitte warte ca. 20-30 Sekunden und klicke dann erneut auf den Button.")
+                st.warning("Das Modell lädt noch. Bitte in 20 Sekunden nochmal drücken.")
             else:
-                st.error(f"Fehler von der API: {response.status_code}")
-                st.info("Hinweis: Überprüfe, ob dein API-Token (HF_TOKEN) in den Streamlit Secrets korrekt hinterlegt ist.")
+                st.error(f"Fehler {response.status_code}: {response.text}")
