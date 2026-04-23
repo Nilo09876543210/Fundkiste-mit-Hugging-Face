@@ -1,35 +1,35 @@
-import streamlit as st
-import requests
-from PIL import Image
-import io
-
-# 1. Konfiguration
-API_URL = "https://api-inference.huggingface.co/models/microsoft/resnet-50"
-headers = {"Authorization": f"Bearer {'DEIN_HUGGING_FACE_TOKEN'}"}
-
-st.title("👕 Schul-Fundkiste KI")
-st.write("Lade ein Foto hoch, um zu sehen, was es ist!")
-
-# 2. Upload-Bereich
-uploaded_file = st.file_uploader("Bild auswählen...", type=["jpg", "jpeg", "png"])
-
-if uploaded_file is not None:
+# Bild anzeigen
     image = Image.open(uploaded_file)
-    st.image(image, caption='Dein Foto', use_column_width=True)
+    st.image(image, caption='Dein Fundstück', use_container_width=True)
     
-    # Bild für die API vorbereiten
+    # Bild für die API konvertieren
     buf = io.BytesIO()
     image.save(buf, format='JPEG')
     byte_im = buf.getvalue()
 
-    if st.button('KI fragen...'):
-        with st.spinner('Die KI überlegt...'):
-            response = requests.post(API_URL, headers=headers, data=byte_im)
-            results = response.json()
+    if st.button('Gegenstand erkennen 🔍'):
+        with st.spinner('KI analysiert... (beim ersten Mal kann es kurz dauern)'):
             
-            # Ergebnis anzeigen
-            st.success("Ich bin mir ziemlich sicher:")
-            # Das erste Ergebnis ist das mit der höchsten Wahrscheinlichkeit
-            label = results[0]['label']
-            score = round(results[0]['score'] * 100, 1)
-            st.metric(label=label, value=f"{score}% sicher")
+            # Die Anfrage an Hugging Face
+            response = requests.post(API_URL, headers=headers, data=byte_im)
+            
+            if response.status_code == 200:
+                results = response.json()
+                
+                st.subheader("Ergebnis:")
+                # Das beste Ergebnis anzeigen
+                top_result = results[0]
+                label = top_result['label']
+                conf = round(top_result['score'] * 100, 1)
+                
+                st.success(f"Ich erkenne: **{label}**")
+                st.progress(top_result['score'])
+                st.write(f"Sicherheit: {conf}%")
+                
+            elif response.status_code == 503:
+                st.warning("Das Modell schläft noch und wacht gerade auf. Bitte klicke in 20 Sekunden nochmal auf den Button.")
+            elif response.status_code == 401:
+                st.error("Fehler: Dein Hugging Face Token ist ungültig. Überprüfe deine Secrets.")
+            else:
+                st.error(f"Fehler: {response.status_code}")
+                st.json(response.json()) # Zeigt die genaue Fehlermeldung der API
