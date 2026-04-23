@@ -1,36 +1,35 @@
 import streamlit as st
 from PIL import Image
-from transformers import pipeline
+import numpy as np  # NumPy ist jetzt dabei!
 
-# 1. Seite einrichten
-st.set_page_config(page_title="Fundkiste", layout="centered")
-st.title("🔍 Die einfache Fundkiste")
-st.write("Lade ein Bild hoch und die KI sagt dir, was es ist.")
+st.title("Fundkiste mit NumPy & KI")
 
-# 2. KI-Modell laden (Passiert lokal auf dem Server)
+try:
+    from transformers import pipeline
+    st.success("✅ System bereit!")
+except ImportError:
+    st.error("❌ Die Bausteine fehlen noch. Bitte requirements.txt prüfen!")
+    st.stop()
+
 @st.cache_resource
-def model_laden():
-    # Wir nehmen ein Standard-Modell von Google
+def load_model():
     return pipeline("image-classification", model="google/vit-base-patch16-224")
 
-with st.spinner('KI wird gestartet...'):
-    classifier = model_laden()
+classifier = load_model()
 
-# 3. Bild-Upload
-bild_datei = st.file_uploader("Wähle ein Bild aus...", type=["jpg", "png", "jpeg"])
+uploaded_file = st.file_uploader("Bild auswählen", type=["jpg", "png"])
 
-if bild_datei is not None:
-    # Bild anzeigen
-    bild = Image.open(bild_datei)
-    st.image(bild, caption="Dein Bild", width='stretch') # Fix für veraltete Befehle
+if uploaded_file:
+    image = Image.open(uploaded_file)
+    
+    # --- NUMPY INTEGRATION ---
+    # Wir wandeln das Bild in ein NumPy-Array um
+    bild_array = np.array(image)
+    st.write(f"Bildgröße als Tabelle (NumPy): {bild_array.shape}")
+    # --------------------------
 
-    # Analyse-Button
-    if st.button("Was ist das?"):
-        with st.spinner('KI denkt nach...'):
-            ergebnisse = classifier(bild)
-            
-            st.success("Ich habe folgende Vermutungen:")
-            for info in ergebnisse:
-                name = info['label']
-                sicherheit = round(info['score'] * 100, 1)
-                st.write(f"**{name}** (Sicherheit: {sicherheit}%)")
+    st.image(image, width='stretch')
+    
+    if st.button("Analyse starten"):
+        results = classifier(image)
+        st.write("Ergebnisse:", results)
