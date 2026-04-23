@@ -1,3 +1,5 @@
 streamlit
-requests
-Pillow
+pillow
+transformers
+torch
+tf-keras
