@@ -1,45 +1,39 @@
 import streamlit as st
 import requests
 from PIL import Image
-import io
 
-# --- KONFIGURATION ---
-API_URL = "https://api-inference.huggingface.co/models/microsoft/resnet-50"
+# Titel der App
+st.title("Fundkiste Analyse")
 
-# Token-Check (Streamlit Secrets oder direkt)
-if "HF_TOKEN" in st.secrets:
-    hf_token = st.secrets["HF_TOKEN"]
-else:
-    hf_token = "DEIN_HF_TOKEN_HIER" # Ersetze dies, falls du keine Secrets nutzt
-
-headers = {"Authorization": f"Bearer {hf_token}"}
-
-# --- UI ---
-st.title("👕 Die KI-Fundkiste")
-st.write("Lade ein Foto hoch, um das Kleidungsstück zu bestimmen.")
-
+# Datei-Uploader
 uploaded_file = st.file_uploader("Bild auswählen...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    # WICHTIG: Alles hier drunter muss genau gleich weit eingerückt sein!
+    # 1. FIX: Zeile war falsch eingerückt (IndentationError)
     image = Image.open(uploaded_file)
-    st.image(image, caption='Hochgeladenes Bild', use_container_width=True)
     
-    # Bild konvertieren
-    buf = io.BytesIO()
-    image.save(buf, format='JPEG')
-    byte_im = buf.getvalue()
+    # 2. FIX: 'width="stretch"' statt veraltetem 'use_container_width'
+    st.image(image, caption='Hochgeladenes Bild', width='stretch')
 
-    if st.button('KI Analyse starten'):
-        with st.spinner('Warte auf Antwort von Hugging Face...'):
-            response = requests.post(API_URL, headers=headers, data=byte_im)
+    # Konfiguration für die Hugging Face API
+    # Ersetze die URL durch deine tatsächliche Modell-URL
+    API_URL = "https://api-inference.huggingface.co/models/DEIN_MODELL"
+    headers = {"Authorization": f"Bearer {st.secrets['HF_TOKEN']}"}
+
+    if st.button("Analyse starten"):
+        with st.spinner('Analysiere Bild...'):
+            response = requests.post(API_URL, headers=headers, data=uploaded_file.getvalue())
             
+            # 3. FIX: Prüfung des Status-Codes zur Vermeidung von JSONDecodeError
             if response.status_code == 200:
-                results = response.json()
-                label = results[0]['label']
-                score = round(results[0]['score'] * 100, 1)
-                st.success(f"Gefunden: {label} ({score}% sicher)")
+                try:
+                    results = response.json()
+                    st.success("Analyse abgeschlossen!")
+                    st.write(results)
+                except Exception as e:
+                    st.error(f"Fehler beim Verarbeiten der Daten: {e}")
             elif response.status_code == 503:
-                st.warning("Modell lädt noch... bitte in 10 Sekunden nochmal drücken.")
+                st.warning("Das KI-Modell startet gerade noch auf Hugging Face. Bitte warte ca. 20-30 Sekunden und klicke dann erneut auf den Button.")
             else:
-                st.error(f"Fehler {response.status_code}: {response.text}")
+                st.error(f"Fehler von der API: {response.status_code}")
+                st.info("Hinweis: Überprüfe, ob dein API-Token (HF_TOKEN) in den Streamlit Secrets korrekt hinterlegt ist.")
