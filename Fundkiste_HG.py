@@ -1,32 +1,32 @@
 import streamlit as st
 from PIL import Image
+# Diese Zeile verursacht aktuell den Fehler, bis Punkt 1 erledigt ist
 from transformers import pipeline
 
-# Titel
 st.title("🔍 Fundkiste Analyse (Lokal)")
-st.write("Diese App nutzt KI direkt im Browser - ohne Anmeldung!")
+st.write("KI-Analyse direkt auf dem Server – ohne Anmeldung.")
 
-# Modell laden (wird beim ersten Mal heruntergeladen)
+# Lädt das Modell herunter und speichert es im Zwischenspeicher
 @st.cache_resource
 def load_model():
-    # Ein kleines, schnelles Modell, das keine Anmeldung braucht
+    # 'base' ist ein solides Standardmodell zur Bilderkennung
     return pipeline("image-classification", model="google/vit-base-patch16-224")
 
-classifier = load_model()
+# Zeigt eine Lade-Info beim ersten Mal
+with st.spinner('KI-Modell wird vorbereitet... (Dauert beim ersten Start kurz)'):
+    classifier = load_model()
 
-# Datei-Uploader
 uploaded_file = st.file_uploader("Bild auswählen...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
-    st.image(image, caption='Hochgeladenes Bild', width='stretch')
+    st.image(image, caption='Hochgeladenes Bild', width='stretch') # [cite: 22]
 
     if st.button("Analyse starten"):
-        with st.spinner('KI arbeitet lokal...'):
-            # Analyse direkt im Code
+        with st.spinner('KI analysiert das Bild...'):
             results = classifier(image)
             
-            st.success("Ergebnis:")
+            st.success("Ergebnisse:")
             for prediction in results:
                 label = prediction['label']
                 score = round(prediction['score'] * 100, 2)
