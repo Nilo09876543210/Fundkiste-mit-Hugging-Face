@@ -1,34 +1,36 @@
 import streamlit as st
 from PIL import Image
-# Falls hier noch ein Fehler kommt, wurde Punkt 1 noch nicht verarbeitet
 from transformers import pipeline
 
-st.title("🔍 Fundkiste Analyse (Lokal)")
-st.write("KI-Analyse direkt auf dem Server – ohne Anmeldung.")
+# 1. Seite einrichten
+st.set_page_config(page_title="Fundkiste", layout="centered")
+st.title("🔍 Die einfache Fundkiste")
+st.write("Lade ein Bild hoch und die KI sagt dir, was es ist.")
 
-# Lädt das Modell herunter und speichert es im Cache
+# 2. KI-Modell laden (Passiert lokal auf dem Server)
 @st.cache_resource
-def load_model():
-    # Ein bewährtes Modell zur Bilderkennung von Google
+def model_laden():
+    # Wir nehmen ein Standard-Modell von Google
     return pipeline("image-classification", model="google/vit-base-patch16-224")
 
-# Zeigt eine Info während des Ladens
-with st.spinner('KI-Modell wird vorbereitet... (Dauert beim ersten Mal kurz)'):
-    classifier = load_model()
+with st.spinner('KI wird gestartet...'):
+    classifier = model_laden()
 
-uploaded_file = st.file_uploader("Bild auswählen...", type=["jpg", "jpeg", "png"])
+# 3. Bild-Upload
+bild_datei = st.file_uploader("Wähle ein Bild aus...", type=["jpg", "png", "jpeg"])
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    # Fix: Nutzt 'width' statt der veralteten Parameter [cite: 19, 21]
-    st.image(image, caption='Hochgeladenes Bild', width='stretch')
+if bild_datei is not None:
+    # Bild anzeigen
+    bild = Image.open(bild_datei)
+    st.image(bild, caption="Dein Bild", width='stretch') # Fix für veraltete Befehle
 
-    if st.button("Analyse starten"):
-        with st.spinner('KI analysiert das Bild...'):
-            results = classifier(image)
+    # Analyse-Button
+    if st.button("Was ist das?"):
+        with st.spinner('KI denkt nach...'):
+            ergebnisse = classifier(bild)
             
-            st.success("Ergebnisse:")
-            for prediction in results:
-                label = prediction['label']
-                score = round(prediction['score'] * 100, 2)
-                st.info(f"**{label}** ({score}%)")
+            st.success("Ich habe folgende Vermutungen:")
+            for info in ergebnisse:
+                name = info['label']
+                sicherheit = round(info['score'] * 100, 1)
+                st.write(f"**{name}** (Sicherheit: {sicherheit}%)")
