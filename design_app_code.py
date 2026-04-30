@@ -2,151 +2,111 @@ import streamlit as st
 from PIL import Image
 import numpy as np
 
-# 1. Seite einrichten für High-End Look
+# 1. Seite einrichten
 st.set_page_config(
-    page_title="Vision Pro | AI", 
+    page_title="Skyline Fundkiste", 
     page_icon="🏙️", 
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- PROFESSIONAL DARK DESIGN & AERODYNAMIC ANIMATION ---
+# --- CLEAN SKYLINE DESIGN (CSS) ---
 st.markdown("""
     <style>
-    /* Hintergrund: Tiefes Anthrazit zu Dunkelblau */
-    .stApp {
-        background: radial-gradient(circle at top, #1a1a2e 0%, #0f0f1a 100%);
-        color: #e0e0e0;
+    /* Sidebar komplett ausblenden */
+    [data-testid="stSidebar"], [data-testid="stHeader"] {
+        display: none;
     }
-
-    /* Sidebar und Header-Elemente komplett ausblenden */
-    [data-testid="stSidebar"], [data-testid="stHeader"] { display: none; }
     
-    /* Haupt-Container: Minimalistischer Glas-Look */
+    /* Hintergrund: Das originale Skyline-Bild ohne Farbveränderung */
+    .stApp {
+        background: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000') no-repeat center center fixed;
+        background-size: cover;
+    }
+
+    /* Glas-Karte für den Inhalt (etwas weißer für bessere Lesbarkeit auf dem Foto) */
     .main-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(5px);
         border-radius: 20px;
-        padding: 40px;
+        padding: 30px;
         margin-top: 50px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.5);
     }
 
-    /* Professional Headline */
-    .brand-title {
-        font-family: 'Inter', sans-serif;
+    /* FLUGZEUG BANNER: Das eingeflogene Ergebnis */
+    .fly-in-result {
+        background: #ff4b4b;
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        font-size: 32px;
+        font-weight: bold;
         text-align: center;
-        font-size: 14px;
-        letter-spacing: 5px;
         text-transform: uppercase;
-        color: #888;
-        margin-bottom: 40px;
-    }
-
-    /* FLUGZEUG BANNER: Edel & Dezent */
-    .pro-flight-banner {
-        background: linear-gradient(90deg, #d4af37, #f1c40f); /* Gold-Look */
-        color: #000;
-        padding: 15px 30px;
-        border-radius: 5px;
-        font-weight: 700;
-        font-size: 28px;
-        text-align: center;
-        letter-spacing: 1px;
-        position: relative;
-        margin-top: 30px;
-        box-shadow: 0 10px 20px rgba(212, 175, 55, 0.2);
+        margin-top: 20px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         
-        /* Die Einflug-Animation */
-        animation: aerodynamicFlyIn 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        /* Animation: Kommt von rechts reingeflogen */
+        animation: flyIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
 
-    @keyframes aerodynamicFlyIn {
-        0% { transform: translateX(-100%) skewX(20deg); opacity: 0; }
-        100% { transform: translateX(0) skewX(0deg); opacity: 1; }
+    @keyframes flyIn {
+        0% { transform: translateX(100%); opacity: 0; }
+        100% { transform: translateX(0); opacity: 1; }
     }
 
-    /* Button Styling: Dezent & Modern */
+    /* Button Styling */
     .stButton>button {
         width: 100%;
-        background-color: transparent;
-        color: #d4af37;
-        border: 1px solid #d4af37;
-        border-radius: 4px;
-        padding: 10px;
-        font-size: 14px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        transition: 0.4s all;
-    }
-    
-    .stButton>button:hover {
-        background-color: #d4af37;
-        color: #000;
-        border: 1px solid #d4af37;
-    }
-
-    /* Skyline Footer: Fixiert, Dezent, Hochwertig */
-    .skyline-footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        height: 25vh;
-        background: url('https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2000') no-repeat bottom;
-        background-size: cover;
-        opacity: 0.3;
-        mask-image: linear-gradient(transparent, black);
-        z-index: -1;
-    }
-
-    /* Drag & Drop Box anpassen */
-    .stFileUploader {
-        border: 1px dashed rgba(255,255,255,0.2);
+        background-color: #2c3e50;
+        color: white;
         border-radius: 10px;
+        padding: 10px;
+        border: none;
+        font-weight: bold;
     }
     </style>
-    
-    <div class="skyline-footer"></div>
     """, unsafe_allow_html=True)
 
 # 2. Header
-st.markdown('<p class="brand-title">AERO VISION SYSTEM v3.0</p>', unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);'>🏙️ KI-Tower Analyse</h1>", unsafe_allow_html=True)
 
-# 3. Main Interface
+# 3. Haupt-Inhalt
 with st.container():
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     
-    uploaded_file = st.file_uploader("IMAGE UPLOAD", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+    uploaded_file = st.file_uploader("Bild zur Erkennung hochladen", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
     
     if uploaded_file:
         image = Image.open(uploaded_file)
-        # Hochwertige Bilddarstellung
         st.image(image, use_container_width=True)
         
-        if st.button("RUN ANALYSIS"):
+        if st.button("OBJEKT SCANNER STARTEN"):
             try:
                 from transformers import pipeline
-                # Wir laden das Modell im Hintergrund
                 classifier = pipeline("image-classification", model="google/vit-base-patch16-224")
                 
-                with st.spinner("PROCESSING..."):
+                with st.spinner("Berechne Daten..."):
                     results = classifier(image)
-                    # Nur das erste Ergebnis ohne Score
-                    top_label = results[0]['label']
+                    # Nur das erste Ergebnis (Label) nehmen
+                    best_match = results[0]['label']
 
-                    # Der "Flug"-Effekt für das Ergebnis
+                    # Das fliegende Banner ohne Prozentzahlen
                     st.markdown(f"""
-                        <div class="pro-flight-banner">
-                            {top_label.upper()}
+                        <div class="fly-in-result">
+                            ✈️ GEFUNDEN: {best_match.upper()}
                         </div>
                     """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error("System initializing...")
+                    
+                    st.balloons()
+            except:
+                st.error("System lädt noch...")
     else:
-        st.markdown("<p style='text-align: center; color: #555; font-size: 12px;'>WAITING FOR INPUT DATA</p>", unsafe_allow_html=True)
+        st.info("Bereit für den Upload. Das Skyline-System wartet auf Daten.")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 4. Minimaler Footer
-st.markdown("<p style='text-align: center; color: #333; font-size: 10px; margin-top: 50px; letter-spacing: 2px;'>SYSTEM STATUS: OPERATIONAL</p>", unsafe_allow_html=True)
+# 4. Kleiner Footer
+st.markdown("<p style='text-align: center; color: white; margin-top: 30px; font-weight: bold;'>Guten Flug über die Skyline! 🌤️</p>", unsafe_allow_html=True)
