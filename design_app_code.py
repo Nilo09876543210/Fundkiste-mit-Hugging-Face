@@ -4,109 +4,122 @@ import numpy as np
 
 # 1. Seite einrichten
 st.set_page_config(
-    page_title="Skyline Fundkiste", 
+    page_title="Skyline Vision", 
     page_icon="🏙️", 
     layout="centered",
     initial_sidebar_state="collapsed"
 )
 
-# --- CLEAN SKYLINE DESIGN (CSS) ---
+# --- TRANSPARENT FLOATING DESIGN (CSS) ---
 st.markdown("""
     <style>
-    /* Sidebar komplett ausblenden */
+    /* Sidebar und Header weg */
     [data-testid="stSidebar"], [data-testid="stHeader"] {
         display: none;
     }
     
-    /* Hintergrund: Das originale Skyline-Bild ohne Farbveränderung */
+    /* Hintergrund: Die originale Skyline vollflächig */
     .stApp {
         background: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000') no-repeat center center fixed;
         background-size: cover;
     }
 
-    /* Glas-Karte für den Inhalt (etwas weißer für bessere Lesbarkeit auf dem Foto) */
+    /* Der "Schwebe-Effekt": Das weisse Quadrat ist jetzt durchsichtig */
     .main-card {
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: blur(5px);
+        background: rgba(255, 255, 255, 0.0); /* Komplett durchsichtig */
         border-radius: 20px;
-        padding: 30px;
+        padding: 20px;
         margin-top: 50px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-        border: 1px solid rgba(255,255,255,0.5);
+        /* Ein starker Text-Schatten hilft, damit alles auf dem Foto lesbar bleibt */
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        color: white;
     }
 
-    /* FLUGZEUG BANNER: Das eingeflogene Ergebnis */
+    /* Das hochgeladene Bild bekommt einen weichen Rand, um "echter" zu wirken */
+    [data-testid="stImage"] img {
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    /* FLUGZEUG BANNER: Kräftiges Rot, damit es vor der Skyline knallt */
     .fly-in-result {
         background: #ff4b4b;
         color: white;
-        padding: 20px;
-        border-radius: 15px;
-        font-size: 32px;
-        font-weight: bold;
+        padding: 25px;
+        border-radius: 50px; /* Abgerundete Kapsel-Form */
+        font-size: 35px;
+        font-weight: 900;
         text-align: center;
         text-transform: uppercase;
-        margin-top: 20px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        margin-top: 30px;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        text-shadow: none; /* Kein Schatten auf dem roten Banner für Clean-Look */
         
-        /* Animation: Kommt von rechts reingeflogen */
-        animation: flyIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        animation: flyIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
 
     @keyframes flyIn {
-        0% { transform: translateX(100%); opacity: 0; }
-        100% { transform: translateX(0); opacity: 1; }
+        0% { transform: translateX(120%) rotate(10deg); opacity: 0; }
+        100% { transform: translateX(0) rotate(0deg); opacity: 1; }
     }
 
-    /* Button Styling */
+    /* Button Styling: Glas-Optik */
     .stButton>button {
         width: 100%;
-        background-color: #2c3e50;
+        background-color: rgba(255, 255, 255, 0.2);
         color: white;
-        border-radius: 10px;
-        padding: 10px;
-        border: none;
+        border-radius: 50px;
+        padding: 15px;
+        border: 2px solid white;
         font-weight: bold;
+        backdrop-filter: blur(5px);
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: white;
+        color: black;
+    }
+
+    /* Datei-Uploader Textfarbe anpassen */
+    .stMarkdown, p, label {
+        color: white !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # 2. Header
-st.markdown("<h1 style='text-align: center; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);'>🏙️ KI-Tower Analyse</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: white; text-shadow: 3px 3px 10px rgba(0,0,0,0.7);'>SKYLINE VISION</h1>", unsafe_allow_html=True)
 
-# 3. Haupt-Inhalt
+# 3. Haupt-Inhalt (Schwebend)
 with st.container():
     st.markdown('<div class="main-card">', unsafe_allow_html=True)
     
-    uploaded_file = st.file_uploader("Bild zur Erkennung hochladen", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+    uploaded_file = st.file_uploader("FOTO HOCHLADEN", type=["jpg", "png", "jpeg"], label_visibility="hidden")
     
     if uploaded_file:
         image = Image.open(uploaded_file)
         st.image(image, use_container_width=True)
         
-        if st.button("OBJEKT SCANNER STARTEN"):
+        if st.button("OBJEKT IDENTIFIZIEREN"):
             try:
                 from transformers import pipeline
                 classifier = pipeline("image-classification", model="google/vit-base-patch16-224")
                 
-                with st.spinner("Berechne Daten..."):
+                with st.spinner("Scanning..."):
                     results = classifier(image)
-                    # Nur das erste Ergebnis (Label) nehmen
                     best_match = results[0]['label']
 
-                    # Das fliegende Banner ohne Prozentzahlen
+                    # Nur das Label, eingeflogen
                     st.markdown(f"""
                         <div class="fly-in-result">
-                            ✈️ GEFUNDEN: {best_match.upper()}
+                            🚀 {best_match.upper()}
                         </div>
                     """, unsafe_allow_html=True)
                     
                     st.balloons()
             except:
-                st.error("System lädt noch...")
+                st.error("System-Check läuft noch...")
     else:
-        st.info("Bereit für den Upload. Das Skyline-System wartet auf Daten.")
+        st.markdown("<p style='text-align: center;'>Zieh ein Foto hierher, um den Scan zu starten.</p>", unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
-
-# 4. Kleiner Footer
-st.markdown("<p style='text-align: center; color: white; margin-top: 30px; font-weight: bold;'>Guten Flug über die Skyline! 🌤️</p>", unsafe_allow_html=True)
